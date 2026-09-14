@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Self-Hosted vs Commercial Translation — Developer Comparison Dashboard</title>
+<meta name="description" content="Compare LibreTranslate, Lingva, and Ollama/Llama 3 against Google, DeepL, and Azure translation APIs: hosting cost, latency, i18n file support, accuracy, and a break-even calculator." />
+<meta property="og:title" content="Self-Hosted vs Commercial Translation — Developer Comparison Dashboard" />
+<meta property="og:description" content="Feature matrix, latency and accuracy benchmarks, and a break-even calculator for LibreTranslate, Lingva, Ollama/Llama 3, Google, DeepL, and Azure." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Inter:wght@400..700&family=JetBrains+Mono:wght@400..700&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="./base.css" />
+<link rel="stylesheet" href="./style.css" />
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  (function () {
+    var d = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', d);
+  })();
+</script>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to content</a>
+
+<header class="site-header">
+  <a href="#top" class="brand" aria-label="TranslateStack home">
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M6 12h14M20 12l-4-4M20 12l-4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M26 20H12M12 20l4-4M12 20l4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>TranslateStack</span>
+  </a>
+  <nav class="main-nav" aria-label="Section navigation">
+    <a href="#matrix">Feature matrix</a>
+    <a href="#latency">Latency</a>
+    <a href="#accuracy">Accuracy</a>
+    <a href="#hosting">Hosting cost</a>
+    <a href="#calculator">Calculator</a>
+    <a href="#sources">Sources</a>
+  </nav>
+  <div class="header-actions">
+    <button class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <a href="#calculator" class="btn btn-primary">Run the calculator</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="top">
+    <div class="container">
+      <div class="hero-grid">
+        <div>
+          <h1 class="hero-title">Self-hosted or cloud API — pick your translation stack with data, not guesswork.</h1>
+          <p class="hero-lede">A side-by-side reference for developers weighing <strong>LibreTranslate</strong>, <strong>Lingva</strong>, and local LLM runners like <strong>Ollama + Llama 3</strong> against <strong>Google</strong>, <strong>DeepL</strong>, and <strong>Azure</strong> — hosting cost, latency at two batch sizes, i18n file support, and accuracy on domain-specific text.</p>
+          <div class="hero-actions">
+            <a href="#matrix" class="btn btn-ghost">View feature matrix</a>
+            <a href="#calculator" class="btn btn-primary">Find your break-even point</a>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="hero-panel-label">Per-million-character pricing, at a glance</div>
+          <div class="hero-compare-row">
+            <span class="label">Azure AI Translator</span>
+            <span class="value tag-cloud num">$10.00</span>
+          </div>
+          <div class="hero-compare-row">
+            <span class="label">Google Cloud Translation</span>
+            <span class="value tag-cloud num">$20.00</span>
+          </div>
+          <div class="hero-compare-row">
+            <span class="label">DeepL API Pro</span>
+            <span class="value tag-cloud num">$25.00</span>
+          </div>
+          <div class="hero-compare-row">
+            <span class="label">LibreTranslate (self-hosted)</span>
+            <span class="value tag-self num">$25–350/mo flat</span>
+          </div>
+          <div class="hero-compare-row">
+            <span class="label">Ollama + Llama 3 (self-hosted)</span>
+            <span class="value tag-self num">~$277+/mo per GPU</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-strip">
+        <div class="kpi-card">
+          <span class="kpi-value num">15–30 min</span>
+          <span class="kpi-label">Fastest self-host setup (LibreTranslate/Lingva Docker)</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-value num">$10–25</span>
+          <span class="kpi-label">Cloud API cost per million characters</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-value num">4/4</span>
+          <span class="kpi-label">i18n formats needing a custom pipeline for most engines</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-value num">~6.1s</span>
+          <span class="kpi-label">Avg. Llama 3 latency per segment vs. ~0.9–1.3s for cloud APIs</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURE MATRIX ============ -->
+  <section id="matrix">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <div class="section-eyebrow">Feature matrix</div>
+          <h2 class="section-title">Six engines, one table</h2>
+          <p class="section-desc">Self-hosted engines run on infrastructure you manage; commercial APIs are pay-per-character with no infrastructure to operate. Scroll horizontally to compare all six.</p>
+        </div>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-item"><span class="tool-pill pill-self"><span class="dot" style="background:var(--chart-libretranslate)"></span>Self-hosted</span></span>
+        <span class="legend-item"><span class="tool-pill pill-cloud"><span class="dot" style="background:var(--chart-google)"></span>Commercial API</span></span>
+      </div>
+
+      <div class="matrix-scroll" tabindex="0" role="region" aria-label="Feature comparison table, scroll horizontally">
+        <table class="matrix-table">
+          <caption>Feature comparison across self-hosted engines and commercial translation APIs. See <a href="#sources">Sources</a> for citations.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+              <th scope="col"><span class="tool-pill pill-self"><span class="dot" style="background:var(--chart-libretranslate)"></span>LibreTranslate</span></th>
+              <th scope="col"><span class="tool-pill pill-self"><span class="dot" style="background:var(--chart-lingva)"></span>Lingva</span></th>
+              <th scope="col"><span class="tool-pill pill-self"><span class="dot" style="background:var(--chart-ollama)"></span>Ollama + Llama 3</span></th>
+              <th scope="col"><span class="tool-pill pill-cloud"><span class="dot" style="background:var(--chart-google)"></span>Google</span></th>
+              <th scope="col"><span class="tool-pill pill-cloud"><span class="dot" style="background:var(--chart-deepl)"></span>DeepL</span></th>
+              <th scope="col"><span class="tool-pill pill-cloud"><span class="dot" style="background:var(--chart-azure)"></span>Azure</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="matrix-group-row"><td colspan="7">Deployment &amp; setup</td></tr>
+            <tr>
+              <td>Engine type</td>
+              <td>Argos Translate (NMT), offline models</td>
+              <td>Front-end proxy for Google Translate's public endpoint</td>
+              <td>General-purpose LLM prompted to translate</td>
+              <td>Neural MT (NMT) + LLM tier</td>
+              <td>Neural MT, EU-language focus</td>
+              <td>Neural MT (Microsoft)</td>
+            </tr>
+            <tr>
+              <td>Setup time</td>
+              <td>~20–30 min (Docker run)<span class="cell-sub">production hardening: hours</span></td>
+              <td>~15–20 min (Docker/Vercel one-click)</td>
+              <td>~10–30 min (install + pull model)<span class="cell-sub">production API wrapper: 0.5–2 days</span></td>
+              <td>&lt;15 min (API key + SDK call)</td>
+              <td>&lt;15 min (API key + SDK call)</td>
+              <td>&lt;15 min (API key + SDK call)</td>
+            </tr>
+            <tr>
+              <td>Data leaves your infra?</td>
+              <td><span class="support-badge support-native">No</span></td>
+              <td><span class="support-badge support-partial">Yes — to Google</span></td>
+              <td><span class="support-badge support-native">No</span></td>
+              <td><span class="support-badge support-none">Yes</span></td>
+              <td><span class="support-badge support-none">Yes</span></td>
+              <td><span class="support-badge support-none">Yes</span></td>
+            </tr>
+
+            <tr class="matrix-group-row"><td colspan="7">Cost model</td></tr>
+            <tr>
+              <td>Pricing basis</td>
+              <td>Flat infra cost, unlimited volume within capacity</td>
+              <td>Flat infra cost (minimal — thin proxy)</td>
+              <td>Flat GPU cost, unlimited volume within throughput</td>
+              <td>$20 / million chars<span class="cell-sub">first 500K/mo free</span></td>
+              <td>$5.49/mo + $25 / million chars</td>
+              <td>$10 / million chars<span class="cell-sub">first 2M/mo free</span></td>
+            </tr>
+            <tr>
+              <td>Typical monthly infra cost</td>
+              <td class="num">$25–350<span class="cell-sub">CPU tiers, see Hosting section</span></td>
+              <td class="num">~$5–20<span class="cell-sub">small VPS / serverless</span></td>
+              <td class="num">~$277–1,600+<span class="cell-sub">per always-on GPU worker</span></td>
+              <td class="num">scales with volume</td>
+              <td class="num">scales with volume</td>
+              <td class="num">scales with volume</td>
+            </tr>
+
+            <tr class="matrix-group-row"><td colspan="7">Latency (illustrative)</td></tr>
+            <tr>
+              <td>100-character request</td>
+              <td class="num">~130 ms</td>
+              <td class="num">~350 ms</td>
+              <td class="num">~2.2 s</td>
+              <td class="num">~190 ms</td>
+              <td class="num">~320 ms</td>
+              <td class="num">~90 ms</td>
+            </tr>
+            <tr>
+              <td>10,000-character batch</td>
+              <td class="num">~3.4 s</td>
+              <td class="num">~9.8 s</td>
+              <td class="num">~51 s</td>
+              <td class="num">~2.6 s</td>
+              <td class="num">~3.1 s</td>
+              <td class="num">~2.1 s</td>
+            </tr>
+
+            <tr class="matrix-group-row"><td colspan="7">i18n file support</td></tr>
+            <tr>
+              <td>JSON</td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-pipeline">Prompt-aware</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-native">Native</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+            </tr>
+            <tr>
+              <td>YAML</td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-pipeline">Prompt-aware</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+            </tr>
+            <tr>
+              <td>PO / gettext</td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-pipeline">Prompt-aware</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+            </tr>
+            <tr>
+              <td>XLIFF</td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-pipeline">Prompt-aware</span></td>
+              <td><span class="support-badge support-none">Pipeline needed</span></td>
+              <td><span class="support-badge support-native">Native (v1.2/2.0/2.1)</span></td>
+              <td><span class="support-badge support-native">Native (v1.0–1.2)</span></td>
+            </tr>
+
+            <tr class="matrix-group-row"><td colspan="7">Quality &amp; coverage</td></tr>
+            <tr>
+              <td>General BLEU (WMT14 En→De)</td>
+              <td class="num">22.4</td>
+              <td class="num">≈ Google (proxy)</td>
+              <td class="num">domain-dependent</td>
+              <td class="num">26.8</td>
+              <td class="num">28.1</td>
+              <td class="num">comparable to Google</td>
+            </tr>
+            <tr>
+              <td>Rate limits</td>
+              <td>None (self-managed capacity)</td>
+              <td>None (self-managed capacity)</td>
+              <td>None (self-managed capacity)</td>
+              <td>Quota-based, raise on request</td>
+              <td>Plan-based, no hard cap on Pro</td>
+              <td>Quota-based, raise on request</td>
+            </tr>
+            <tr>
+              <td>Offline capable</td>
+              <td><span class="support-badge support-native">Yes</span></td>
+              <td><span class="support-badge support-none">No</span></td>
+              <td><span class="support-badge support-native">Yes</span></td>
+              <td><span class="support-badge support-none">No</span></td>
+              <td><span class="support-badge support-none">No</span></td>
+              <td><span class="support-badge support-none">No</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LATENCY ============ -->
+  <section id="latency">
+    <div class="container">
+      <div class="section-eyebrow">Latency</div>
+      <h2 class="section-title">Small requests vs. large batches behave differently</h2>
+      <p class="section-desc">Cloud APIs pay a fixed network round-trip but translate short strings quickly; local LLM runners pay a much larger fixed cost because generation is autoregressive. The gap widens, not narrows, as batch size grows — throughput (chars/sec), not just per-call latency, is what actually matters at scale.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">100-character request</div>
+          <div class="card-sub">Single short UI string or sentence, one call</div>
+          <div class="chart-wrap"><canvas id="chart-latency-100" role="img" aria-label="Bar chart of latency in milliseconds for a 100 character request across six translation engines"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">10,000-character batch</div>
+          <div class="card-sub">~100 segments, single worker/instance, serial processing</div>
+          <div class="chart-wrap"><canvas id="chart-latency-10k" role="img" aria-label="Bar chart of latency in milliseconds for a 10000 character batch across six translation engines"></canvas></div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <p><strong>Figures are illustrative,</strong> aggregated from published third-party benchmarks (<a href="https://wxrks.com/blog/best-machine-translation-api" target="_blank" rel="noopener noreferrer">wxrks.com</a>, <a href="https://bakalis.io/work/translation-model-benchmark-video-transcripts/" target="_blank" rel="noopener noreferrer">bakalis.io</a>), not a live test run against these exact endpoints. Batch figures assume single-worker serial processing — cloud APIs and multi-worker self-hosted deployments both parallelize in practice, which lowers wall-clock time for large jobs. Always benchmark your own payloads before committing to a stack.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACCURACY ============ -->
+  <section id="accuracy">
+    <div class="container">
+      <div class="section-eyebrow">Accuracy benchmarking</div>
+      <h2 class="section-title">Quality ranking flips by domain</h2>
+      <p class="section-desc">On general news text, commercial NMT APIs lead. On a video-transcript domain benchmark using COMET-QE, a locally-run Llama 3 model narrowly outscored both Google and DeepL — at roughly <strong>6–7× the latency</strong> and <strong>2.4–6.7× less throughput</strong>. There is no universal winner; benchmark on your own domain-specific dataset before deciding.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">General text — BLEU score (WMT14 En→De)</div>
+          <div class="card-sub">Higher is better · 20–29 = "gist is clear, notable grammar errors" · 30+ = good to high quality</div>
+          <div class="chart-wrap"><canvas id="chart-bleu" role="img" aria-label="Bar chart of BLEU scores for LibreTranslate, Google Translate, and DeepL"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Domain-specific — video transcripts (COMET-QE)</div>
+          <div class="card-sub">Less negative is better · quality vs. latency/throughput trade-off shown below</div>
+          <div class="chart-wrap"><canvas id="chart-comet" role="img" aria-label="Bar chart of COMET-QE quality scores for Google, DeepL, and Llama 3 on video transcript translation"></canvas></div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <p><strong>Benchmark your own domain.</strong> Academic studies (<a href="https://aclanthology.org/2024.findings-acl.428.pdf" target="_blank" rel="noopener noreferrer">ACL Findings 2024</a>, <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13075536/" target="_blank" rel="noopener noreferrer">PMC clinical-translation study</a>) confirm that MT and LLM engines trade rank depending on domain, document length, and language pair — traditional MT tends to win on surface-level metrics (BLEU/CHRF) while LLMs show relative gains on semantic similarity for some language pairs. Sample 200–500 real segments from your own corpus, score with BLEU/COMET/CHRF against a human reference, and re-run whenever you change providers or models.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOSTING COST ============ -->
+  <section id="hosting">
+    <div class="container">
+      <div class="section-eyebrow">Hosting cost</div>
+      <h2 class="section-title">What self-hosting actually costs, by tier</h2>
+      <p class="section-desc">Self-hosted engines have a step-function cost: you pay for a capacity tier, not per character. Below that ceiling, more volume is free; above it, you pay for the next tier or another GPU worker.</p>
+
+      <h3 style="font-size: var(--text-base); margin-bottom: var(--space-4);">LibreTranslate — CPU-based, req/s capacity</h3>
+      <div class="tier-grid" style="margin-bottom: var(--space-10);" id="libre-tier-grid"></div>
+
+      <h3 style="font-size: var(--text-base); margin-bottom: var(--space-4);">Ollama + Llama 3 8B — GPU worker, chars/sec throughput</h3>
+      <div class="tier-grid" id="ollama-tier-grid"></div>
+
+      <div class="callout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <p>LibreTranslate additionally needs ~10 GB persistent storage for the full language-model set (<a href="https://railway.com/deploy/libretranslate-1" target="_blank" rel="noopener noreferrer">railway.com</a>). Llama 3 8B needs 6–8 GB VRAM at Q4 quantization minimum (<a href="https://localaimaster.com/models/llama-3-1-8b" target="_blank" rel="noopener noreferrer">localaimaster.com</a>); GPU worker costs above use published on-demand rates from <a href="https://www.runpod.io/product/cloud-gpus" target="_blank" rel="noopener noreferrer">RunPod</a> and <a href="https://lambda.ai/pricing" target="_blank" rel="noopener noreferrer">Lambda</a> run 24/7 (×730 hrs/mo). Neither estimate includes engineering/on-call time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CALCULATOR ============ -->
+  <section id="calculator">
+    <div class="container">
+      <div class="section-eyebrow">Break-even calculator</div>
+      <h2 class="section-title">Where does self-hosting start winning?</h2>
+      <p class="section-desc">Set your expected monthly volume and peak traffic spike. We size the self-hosted tier needed to absorb the spike, then compare its flat monthly cost against per-character cloud pricing across the same volume range.</p>
+
+      <div class="calc-panel">
+        <div class="calc-grid">
+          <div class="calc-controls">
+            <div class="field">
+              <label for="input-volume">Monthly volume <span class="field-value" id="volume-display">10.0M chars</span></label>
+              <input type="range" id="input-volume" min="0" max="100" value="50" step="1" aria-describedby="volume-hint" />
+              <span class="field-hint" id="volume-hint">100K – 1B characters/month, log scale</span>
+            </div>
+
+            <div class="field">
+              <label for="input-spike">Peak traffic spike <span class="field-value" id="spike-display">3×</span></label>
+              <input type="range" id="input-spike" min="1" max="20" value="3" step="1" aria-describedby="spike-hint" />
+              <span class="field-hint" id="spike-hint">Peak request rate vs. average (sizes your self-hosted capacity)</span>
+            </div>
+
+            <div class="field">
+              <label for="input-reqsize">Avg. request size <span class="field-value" id="reqsize-display">1,000 chars</span></label>
+              <input type="range" id="input-reqsize" min="100" max="5000" value="1000" step="100" aria-describedby="reqsize-hint" />
+              <span class="field-hint" id="reqsize-hint">Characters per API call — affects required req/s capacity</span>
+            </div>
+
+            <div class="field">
+              <label>Commercial API</label>
+              <select id="input-cloud">
+                <option value="azure">Azure AI Translator — $10/M chars</option>
+                <option value="google" selected>Google Cloud Translation — $20/M chars</option>
+                <option value="deepl">DeepL API Pro — $5.49 + $25/M chars</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Self-hosted engine</label>
+              <div class="field-toggle-group" role="group" aria-label="Self-hosted engine">
+                <button type="button" class="field-toggle" id="toggle-libre" aria-pressed="true" data-engine="libre">LibreTranslate (CPU)</button>
+                <button type="button" class="field-toggle" id="toggle-ollama" aria-pressed="false" data-engine="ollama">Ollama + Llama 3 (GPU)</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-results">
+            <div class="result-kpis">
+              <div class="result-kpi">
+                <span class="rk-label">Cloud cost / month</span>
+                <span class="rk-value num" id="result-cloud-cost">$0</span>
+              </div>
+              <div class="result-kpi">
+                <span class="rk-label">Self-hosted cost / month</span>
+                <span class="rk-value num" id="result-self-cost">$0</span>
+              </div>
+              <div class="result-kpi accent">
+                <span class="rk-label">Monthly difference</span>
+                <span class="rk-value num" id="result-savings">$0</span>
+                <span class="rk-delta" id="result-savings-delta"></span>
+              </div>
+              <div class="result-kpi">
+                <span class="rk-label">Break-even volume</span>
+                <span class="rk-value num" id="result-breakeven">—</span>
+              </div>
+            </div>
+
+            <div class="calc-chart-wrap">
+              <canvas id="chart-breakeven" role="img" aria-label="Line chart comparing monthly cloud API cost and self-hosted cost across a range of monthly translation volumes, showing the break-even point"></canvas>
+            </div>
+
+            <p class="calc-footnote" id="tier-explainer">Sizing: at your settings, this needs <strong id="tier-name">—</strong> (<span id="tier-specs">—</span>).</p>
+            <p class="calc-footnote">Simplified model: ignores egress bandwidth, engineering/on-call time, SLA requirements, and quality differences between engines. Use it to find a starting range, then validate against your real traffic pattern. See <a href="#hosting">Hosting cost</a> for tier definitions and <a href="#sources">Sources</a> for pricing references.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section id="sources">
+    <div class="container container--narrow">
+      <div class="section-eyebrow">Sources &amp; methodology</div>
+      <h2 class="section-title">Where these numbers come from</h2>
+      <p class="section-desc">Every pricing, latency, and quality figure above traces to one of the sources below. Cloud pricing reflects publicly listed rates at time of writing and changes frequently — always confirm current pricing on the provider's site before budgeting.</p>
+      <ul class="sources-grid" id="sources-list"></ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <a href="#top" class="brand" aria-label="TranslateStack home">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M6 12h14M20 12l-4-4M20 12l-4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M26 20H12M12 20l4-4M12 20l4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>TranslateStack</span>
+    </a>
+    <p class="footer-note">Independent developer reference. Not affiliated with Google, DeepL, Microsoft Azure, LibreTranslate, Lingva, Ollama, or Meta. Figures compiled from public sources — verify before production use.</p>
+  </div>
+</footer>
+
+<script src="./data.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
