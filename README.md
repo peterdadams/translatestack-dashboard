@@ -73,3 +73,5 @@ Wrangler uploads every file in the directory as a static asset and serves `index
 ## Sources
 
 Every pricing, latency, and accuracy figure in the dashboard links to its source inline in the page footer (`#sources` section) and in the comments of `data.js`.
+
+Deployed automatically via Cloudflare Pages Git integration.
